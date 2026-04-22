@@ -1,0 +1,43 @@
+name: Internship Checker
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'   # Every 30 minutes
+  workflow_dispatch:           # Also allows manual trigger from GitHub UI
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Restore state file (cross-run cache)
+        uses: actions/cache@v4
+        with:
+          path: state.json
+          key: internship-state-${{ github.run_id }}
+          restore-keys: |
+            internship-state-
+
+      - name: Run internship checker
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python3 main.py
+
+      - name: Save updated state file
+        uses: actions/cache/save@v4
+        if: always()   # Save even if a source fails so state isn't lost
+        with:
+          path: state.json
+          key: internship-state-${{ github.run_id }}
