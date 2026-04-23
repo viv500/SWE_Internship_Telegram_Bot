@@ -142,7 +142,10 @@ def main():
                 continue
 
             seen_ids = get_seen_ids(state, state_key)
-            unseen_listings = [l for l in cat_listings if l["id"] not in seen_ids]
+            unseen_listings = [
+                l for l in cat_listings
+                if l["id"] not in seen_ids and l.get("legacy_id") not in seen_ids
+            ]
 
             max_age_days = source.get("notify_max_age_days")
             notify_listings = [l for l in unseen_listings if _within_age_limit(l, max_age_days)]

@@ -120,8 +120,10 @@ def fetch_listings(source: dict) -> list[dict]:
             # can be edited frequently without meaning a truly new posting.
             identity = _normalize_url(url) or f"{company}|{role}|{location}"
             listing_id = hashlib.md5(f"{source['name']}|{category}|{identity}".encode()).hexdigest()
+            legacy_id = hashlib.md5(f"{company}|{role}|{location}".encode()).hexdigest()
             listings.append({
                 "id": listing_id,
+                "legacy_id": legacy_id,
                 "company": company,
                 "role": role,
                 "location": location,
