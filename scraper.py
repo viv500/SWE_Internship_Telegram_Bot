@@ -16,6 +16,15 @@ HEADERS = {
 SKIP_COMPANIES = {"---", "↳", "", "<!-- -->"}
 
 
+def _normalize_url(url: str) -> str:
+    if not url:
+        return ""
+    cleaned = url.strip()
+    if cleaned.endswith("/"):
+        cleaned = cleaned[:-1]
+    return cleaned
+
+
 def _github_blob_to_api_url(url: str) -> str:
     # blob path: /owner/repo/blob/branch/path/to/file.md
     match = re.match(
@@ -107,7 +116,10 @@ def fetch_listings(source: dict) -> list[dict]:
             if "salary" in col and len(cells) > col["salary"]:
                 salary = cells[col["salary"]].get_text(strip=True)
 
-            listing_id = hashlib.md5(f"{company}|{role}|{location}".encode()).hexdigest()
+            # Prefer apply URL for a stable ID because table text (role/location/age)
+            # can be edited frequently without meaning a truly new posting.
+            identity = _normalize_url(url) or f"{company}|{role}|{location}"
+            listing_id = hashlib.md5(f"{source['name']}|{category}|{identity}".encode()).hexdigest()
             listings.append({
                 "id": listing_id,
                 "company": company,

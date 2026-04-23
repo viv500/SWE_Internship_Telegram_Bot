@@ -20,6 +20,7 @@ SOURCES = [
         "tag": "🟢 SimplifyJobs · Summer 2026",
         "url": "https://github.com/SimplifyJobs/Summer2026-Internships/blob/dev/README.md",
         "top_n": 20,
+        "notify_max_age_days": 2,
         "skip_category_keywords": ["See Full List"],
         "columns": {
             "company": 0,
@@ -40,6 +41,7 @@ SOURCES = [
         "tag": "🟡 SimplifyJobs · Off-Season 2026",
         "url": "https://github.com/SimplifyJobs/Summer2026-Internships/blob/dev/README-Off-Season.md",
         "top_n": 20,
+        "notify_max_age_days": 2,
         "skip_category_keywords": ["See Full List"],
         "columns": {
             "company": 0,
