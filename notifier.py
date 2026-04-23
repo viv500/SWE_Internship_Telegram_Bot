@@ -9,19 +9,17 @@ def send_notification(listing: dict):
         print("[INFO] Telegram credentials not set - skipping notification.")
         return
 
-    age_line = f"\n⏰ <b>Posted:</b>  {listing['age']}" if listing.get("age") else ""
-    salary_line = f"\n💰 <b>Salary:</b>   {listing['salary']}" if listing.get("salary") else ""
+    age_line = f"\n⏰ {listing['age']}" if listing.get("age") else ""
+    salary_line = f"\n💰 {listing['salary']}" if listing.get("salary") else ""
     text = (
-        f"🆕 <b>New Internship Posted!</b>\n"
-        f"<i>{listing.get('tag', listing['source'])}</i>\n\n"
-        f"📂 <b>Category:</b> {listing['category']}\n"
-        f"🏢 <b>Company:</b>  {listing['company']}\n"
-        f"💼 <b>Role:</b>     {listing['role']}\n"
-        f"📍 <b>Location:</b> {listing['location']}"
+        f"🏢 <b>{listing['company'].upper()}</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"💼 {listing['role']}\n"
+        f"📍 {listing['location']}"
         f"{salary_line}"
-        f"{age_line}\n"
-        f"🔗 <b>Apply:</b>    {listing['url']}\n\n"
-        f"<code>{listing['source']}</code>"
+        f"{age_line}\n\n"
+        f"<a href=\"{listing['url']}\">➡️ Apply Now</a>\n\n"
+        f"<i>{listing.get('tag', listing['source'])} · {listing['category']}</i>"
     )
 
     url = TELEGRAM_API_URL.format(token=TELEGRAM_BOT_TOKEN)
