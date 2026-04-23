@@ -176,7 +176,7 @@ def main():
     state = load_state()
 
     if is_first_run:
-        log("INFO", "First run — seeding all buckets. No notifications sent.")
+        log("INFO", "First run — seeding old listings only. Recent ones will notify on next run.")
 
     if should_send_test_ping():
         send_test_ping()
@@ -221,13 +221,22 @@ def main():
         for category, cat_listings in by_category.items():
             state_key = f"{source['name']}::{category}"
 
-            if is_first_run:
-                state = mark_seen(state, state_key, [l["id"] for l in cat_listings])
-                continue
+            max_age_days = source.get("notify_max_age_days")
+            age_format = source.get("age_format", "auto")
 
-            if state_key not in state:
-                state = mark_seen(state, state_key, [l["id"] for l in cat_listings])
-                log("INFO", f"  Seeded new bucket '{category}' ({len(cat_listings)} listings)")
+            if is_first_run or state_key not in state:
+                # Seed only listings that are OLDER than our notification window.
+                # Recent listings are intentionally left unseeded so they notify on the next run.
+                seed_ids = [
+                    l["id"] for l in cat_listings
+                    if not _within_age_limit(l, max_age_days, age_format)
+                ]
+                state = mark_seen(state, state_key, seed_ids)
+                recent_count = len(cat_listings) - len(seed_ids)
+                if is_first_run:
+                    log("INFO", f"  [{category}] Seeded {len(seed_ids)} old, left {recent_count} recent to notify next run")
+                else:
+                    log("INFO", f"  Seeded new bucket '{category}' ({len(seed_ids)} old, {recent_count} recent pending)")
                 continue
 
             seen_ids = get_seen_ids(state, state_key)
@@ -237,9 +246,10 @@ def main():
             ]
 
             max_age_days = source.get("notify_max_age_days")
+            age_format = source.get("age_format", "auto")
             notify_listings = [
                 l for l in unseen_listings
-                if _within_age_limit(l, max_age_days, source.get("age_format", "auto"))
+                if _within_age_limit(l, max_age_days, age_format)
             ]
             skipped_old = len(unseen_listings) - len(notify_listings)
             source_skipped_old += skipped_old
@@ -257,20 +267,17 @@ def main():
 
             state = mark_seen(state, state_key, [l["id"] for l in unseen_listings])
 
-        if is_first_run:
-            log("INFO", f"  Seeded {len(listings)} listings across {len(by_category)} sections")
-        else:
-            status = f"{source_new} NEW" if source_new else "nothing new"
-            if source_skipped_old:
-                status += f", {source_skipped_old} old skipped"
-            log("INFO", f"  Result: {status}")
-            total_new += source_new
+        status = f"{source_new} NEW" if source_new else "nothing new"
+        if source_skipped_old:
+            status += f", {source_skipped_old} old skipped"
+        log("INFO", f"  Result: {status}")
+        total_new += source_new
 
     print(f"\n{'='*64}")
-    if not is_first_run:
-        log("INFO", f"Run complete — {total_new} new listing(s) found across all sources")
+    if is_first_run:
+        log("INFO", "Seeding complete — recent listings will notify on next run.")
     else:
-        log("INFO", "Seeding complete — bot is ready. Run again to start monitoring.")
+        log("INFO", f"Run complete — {total_new} new listing(s) found across all sources")
     log("INFO", "State saved.")
     print(f"{'='*64}\n")
 
