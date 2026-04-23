@@ -15,6 +15,17 @@ def should_send_test_ping() -> bool:
     return os.getenv("TELEGRAM_TEST_PING", "").strip().lower() in {"1", "true", "yes", "on"}
 
 
+def get_recent_audit_days() -> int | None:
+    raw = os.getenv("RECENT_AUDIT_DAYS", "").strip()
+    if not raw:
+        return None
+    try:
+        val = int(raw)
+    except ValueError:
+        return None
+    return val if val >= 0 else None
+
+
 def send_test_ping():
     test_listing = {
         "category": "Workflow Test",
@@ -31,11 +42,60 @@ def send_test_ping():
     log("INFO", "Sent Telegram test ping (TELEGRAM_TEST_PING enabled)")
 
 
-def _age_to_days(age_text: str):
+def _parse_absolute_date_days(s: str):
+    normalized = re.sub(r"(\d+)(st|nd|rd|th)", r"\1", s.strip(), flags=re.IGNORECASE)
+    normalized = normalized.replace(",", " ")
+    normalized = re.sub(r"\s+", " ", normalized).strip()
+
+    today = datetime.date.today()
+    formats = [
+        "%Y-%m-%d",
+        "%Y/%m/%d",
+        "%m/%d/%Y",
+        "%m/%d/%y",
+        "%b %d %Y",
+        "%B %d %Y",
+        "%b %d",
+        "%B %d",
+    ]
+
+    for fmt in formats:
+        try:
+            parsed = datetime.datetime.strptime(normalized, fmt).date()
+            if "%Y" not in fmt and "%y" not in fmt:
+                parsed = parsed.replace(year=today.year)
+                # Handle year rollover for dates like "Dec 31" when today is Jan.
+                if parsed > today + datetime.timedelta(days=1):
+                    parsed = parsed.replace(year=today.year - 1)
+            delta = (today - parsed).days
+            if delta < 0:
+                return 0
+            return delta
+        except ValueError:
+            continue
+
+    return None
+
+
+def _age_to_days(age_text: str, age_format: str = "auto"):
     if not age_text:
         return None
 
+    mode = (age_format or "auto").strip().lower()
     s = age_text.strip().lower()
+    if s in {"today", "new", "just now", "now"}:
+        return 0
+    if s == "yesterday":
+        return 1
+
+    if mode in {"auto", "absolute"}:
+        absolute_days = _parse_absolute_date_days(age_text)
+        if absolute_days is not None:
+            return absolute_days
+
+    if mode == "absolute":
+        return None
+
     m = re.search(r"(\d+)", s)
     if not m:
         return None
@@ -52,11 +112,11 @@ def _age_to_days(age_text: str):
     return None
 
 
-def _within_age_limit(listing: dict, max_age_days: int | None) -> bool:
+def _within_age_limit(listing: dict, max_age_days: int | None, age_format: str = "auto") -> bool:
     if max_age_days is None:
         return True
 
-    age_days = _age_to_days(listing.get("age", ""))
+    age_days = _age_to_days(listing.get("age", ""), age_format)
     # If age cannot be parsed, keep the notification path unchanged.
     if age_days is None:
         return True
@@ -86,6 +146,25 @@ def print_preview(listings: list[dict]):
     print()
 
 
+def print_recent_audit(source_name: str, listings: list[dict], max_days: int, age_format: str = "auto"):
+    recent = []
+    for listing in listings:
+        age_days = _age_to_days(listing.get("age", ""), age_format)
+        if age_days is not None and age_days <= max_days:
+            recent.append((age_days, listing))
+
+    recent.sort(key=lambda x: x[0])
+    log("INFO", f"Recent age-audit (0-{max_days}d): {len(recent)} listing(s)")
+    for age_days, listing in recent:
+        log(
+            "INFO",
+            (
+                f"  [{listing['category']}] {listing['company']} — {listing['role']} "
+                f"| age='{listing.get('age', '')}' ({age_days}d)"
+            ),
+        )
+
+
 def main():
     run_start = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"\n{'='*64}")
@@ -101,6 +180,8 @@ def main():
 
     if should_send_test_ping():
         send_test_ping()
+
+    recent_audit_days = get_recent_audit_days()
 
     total_new = 0
 
@@ -127,6 +208,14 @@ def main():
         if TEST_MODE:
             print_preview(listings)
 
+        if recent_audit_days is not None:
+            print_recent_audit(
+                source["name"],
+                listings,
+                recent_audit_days,
+                source.get("age_format", "auto"),
+            )
+
         source_new = 0
         source_skipped_old = 0
         for category, cat_listings in by_category.items():
@@ -148,7 +237,10 @@ def main():
             ]
 
             max_age_days = source.get("notify_max_age_days")
-            notify_listings = [l for l in unseen_listings if _within_age_limit(l, max_age_days)]
+            notify_listings = [
+                l for l in unseen_listings
+                if _within_age_limit(l, max_age_days, source.get("age_format", "auto"))
+            ]
             skipped_old = len(unseen_listings) - len(notify_listings)
             source_skipped_old += skipped_old
 
