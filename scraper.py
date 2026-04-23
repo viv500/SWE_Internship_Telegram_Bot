@@ -1,17 +1,24 @@
 import hashlib
+import os
 import re
 import requests
 from bs4 import BeautifulSoup
 from config import TOP_N
 
-HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/124.0.0.0 Safari/537.36"
-    ),
-    "Accept": "application/vnd.github.html+json",
-}
+
+def _build_headers() -> dict:
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/124.0.0.0 Safari/537.36"
+        ),
+        "Accept": "application/vnd.github.html+json",
+    }
+    token = os.environ.get("GITHUB_TOKEN", "").strip()
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    return headers
 
 SKIP_COMPANIES = {"---", "↳", "", "<!-- -->"}
 
@@ -67,7 +74,7 @@ def fetch_listings(source: dict) -> list[dict]:
     Only the top TOP_N rows per category are returned (list is newest-first).
     """
     api_url = _github_blob_to_api_url(source["url"])
-    response = requests.get(api_url, headers=HEADERS, timeout=15)
+    response = requests.get(api_url, headers=_build_headers(), timeout=15)
     response.raise_for_status()
     soup = BeautifulSoup(response.text, "html.parser")
 

@@ -31,7 +31,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Restore state file (cross-run cache)
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: state.json
           key: internship-state-v3-${{ github.run_id }}
@@ -43,6 +43,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TELEGRAM_TEST_PING: ${{ github.event.inputs.send_test_ping }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python3 main.py
 
       - name: Save updated state file
