@@ -20,7 +20,7 @@ SOURCES = [
         "tag": "🟢 SimplifyJobs · Summer 2026",
         "url": "https://github.com/SimplifyJobs/Summer2026-Internships/blob/dev/README.md",
         "top_n": 20,
-        "notify_max_age_days": 2,
+        "notify_max_age_days": 0,
         "age_format": "relative",
         "skip_category_keywords": ["See Full List"],
         "columns": {
@@ -42,7 +42,7 @@ SOURCES = [
         "tag": "🟡 SimplifyJobs · Off-Season 2026",
         "url": "https://github.com/SimplifyJobs/Summer2026-Internships/blob/dev/README-Off-Season.md",
         "top_n": 20,
-        "notify_max_age_days": 2,
+        "notify_max_age_days": 0,
         "age_format": "relative",
         "skip_category_keywords": ["See Full List"],
         "columns": {
@@ -63,7 +63,7 @@ SOURCES = [
         "tag": "🍁 Canadian Tech · 2026",
         "url": "https://github.com/negarprh/Canadian-Tech-Internships-2026",
         "top_n": 20,
-        "notify_max_age_days": 2,
+        "notify_max_age_days": 0,
         "age_format": "absolute",
         "columns": {
             "company": 0,
@@ -84,7 +84,7 @@ SOURCES = [
         "tag": "🚀 SpeedyApply · FAANG+ 2026",
         "url": "https://github.com/speedyapply/2026-SWE-College-Jobs",
         "top_n": 20,
-        "notify_max_age_days": 2,
+        "notify_max_age_days": 0,
         "age_format": "relative",
         "include_sections": ["FAANG+"],
         "columns": {
@@ -107,7 +107,7 @@ SOURCES = [
         "tag": "⭐ Vansh+Ouckah · Summer 2026",
         "url": "https://github.com/vanshb03/Summer2027-Internships",
         "top_n": 20,
-        "notify_max_age_days": 2,
+        "notify_max_age_days": 0,
         "age_format": "absolute",
         "skip_category_keywords": ["Want notifications", "Summer 2026 Tech Internships"],
         "columns": {
@@ -129,7 +129,7 @@ SOURCES = [
         "tag": "🌀 Vansh+Ouckah · Spring/Fall 2026",
         "url": "https://github.com/vanshb03/Summer2027-Internships/blob/dev/OFFSEASON_README.md",
         "top_n": 20,
-        "notify_max_age_days": 2,
+        "notify_max_age_days": 0,
         "age_format": "absolute",
         "skip_category_keywords": ["Want notifications", "Spring & Fall 2026 Tech Internships"],
         "columns": {
